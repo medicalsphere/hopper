@@ -50,9 +50,10 @@ def test_all_six_providers_have_at_least_one_model():
 
 
 def test_registry_covers_expected_aliases():
-    for alias in ["claude-sonnet", "claude-opus", "claude-haiku",
-                  "gpt-4o-latest", "llama-3.3-70b", "mixtral-8x7b",
-                  "gemini-flash", "gemini-pro", "grok", "sonar-small"]:
+    for alias in ["claude-sonnet", "claude-opus",
+                  "gpt-5.4", "gpt-5.4-mini",
+                  "gemini-3-flash", "gemini-3.1-pro", "GLM-5",
+                  "grok", "sonar"]:
         assert alias in router._MODELS, f"Alias {alias!r} missing from registry"
 
 
@@ -76,19 +77,19 @@ def test_caller_value_overrides_model_default():
 
 
 def test_drops_unsupported_param_and_logs_warning():
-    # o1 has temperature in unsupported_params
-    entry = router._MODELS["o1"]
+    # gpt-5.4 has temperature in unsupported_params
+    entry = router._MODELS["gpt-5.4-2026-03-05"]
     filtered, log = router.apply_defaults_and_filter(
-        _req("o1", temperature=0.7), entry
+        _req("gpt-5.4-2026-03-05", temperature=0.7), entry
     )
     assert "temperature" not in filtered
     assert any("Dropped unsupported param" in msg and "temperature" in msg for msg in log)
 
 
 def test_passes_supported_param_without_logging():
-    entry = router._MODELS["gpt-4o"]
+    entry = router._MODELS["claude-sonnet-4-6"]
     filtered, log = router.apply_defaults_and_filter(
-        _req("gpt-4o", temperature=0.5, max_tokens=512), entry
+        _req("claude-sonnet-4-6", temperature=0.5, max_tokens=512), entry
     )
     assert filtered["temperature"] == 0.5
     assert filtered["max_tokens"] == 512
@@ -114,15 +115,47 @@ def test_unknown_param_passes_through_with_notice():
 
 def test_provider_options_are_not_touched_by_filter():
     # provider_options bypass filtering; the adapter reads them directly.
-    entry = router._MODELS["gpt-4o"]
+    entry = router._MODELS["claude-sonnet-4-6"]
     request = CanonicalRequest(
-        model="gpt-4o",
+        model="claude-sonnet-4-6",
         messages=[CanonicalMessage(role="user", content="hi")],
         provider_options={"response_format": {"type": "json_object"}},
     )
     filtered, _ = router.apply_defaults_and_filter(request, entry)
     # provider_options do not appear in the filtered dict
     assert "response_format" not in filtered
+
+
+# ---------------------------------------------------------------------------
+# Passthrough mode (unregistered model + provider=)
+# ---------------------------------------------------------------------------
+
+def test_passthrough_resolves_with_provider_hint():
+    _, entry, log = router.resolve(_req("claude-new-model-x", provider="anthropic"))
+    assert entry.id == "claude-new-model-x"
+    assert entry.provider == "anthropic"
+    assert any("Passthrough" in msg for msg in log)
+
+
+def test_passthrough_raises_without_provider_hint():
+    with pytest.raises(ValueError, match="Unknown model"):
+        router.resolve(_req("claude-new-model-x"))
+
+
+def test_extra_params_pass_through_filter():
+    entry = router._MODELS["claude-sonnet-4-6"]
+    request = _req("claude-sonnet-4-6", extra_params={"top_p": 0.9, "top_k": 40})
+    filtered, _ = router.apply_defaults_and_filter(request, entry)
+    assert filtered["top_p"] == 0.9
+    assert filtered["top_k"] == 40
+
+
+def test_extra_params_override_canonical_params():
+    entry = router._MODELS["claude-sonnet-4-6"]
+    # If caller passes max_tokens both ways, extra_params wins (merged last)
+    request = _req("claude-sonnet-4-6", max_tokens=512, extra_params={"max_tokens": 999})
+    filtered, _ = router.apply_defaults_and_filter(request, entry)
+    assert filtered["max_tokens"] == 999
 
 
 # ---------------------------------------------------------------------------

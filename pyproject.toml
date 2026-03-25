@@ -3,9 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hopper"
+name = "medicalsphere-hopper"
 version = "0.1.0"
 description = "Unified Python library for AI model API calls"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0",

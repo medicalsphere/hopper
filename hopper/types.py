@@ -44,6 +44,13 @@ class CanonicalRequest:
     stream: bool = False
     # Escape hatch for provider-specific params; bypasses canonical filtering.
     provider_options: dict[str, Any] = field(default_factory=dict)
+    # Optional provider hint for models not in the registry (passthrough mode).
+    # Must be one of the known provider names: anthropic, openai, google,
+    # together, perplexity, grok.
+    provider: str | None = None
+    # Extra params forwarded as-is in passthrough mode (no filtering applied).
+    # Example: {"temperature": 0.7, "top_p": 0.9}
+    extra_params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

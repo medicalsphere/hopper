@@ -86,11 +86,39 @@ Every model has short aliases so you don't need to remember full IDs:
 ```
 "claude-sonnet"  →  claude-sonnet-4-6
 "claude-haiku"   →  claude-haiku-4-5-20251001
-"gemini-flash"   →  gemini-3-flash-preview
+"gemini-3-flash" →  gemini-3-flash-preview
 "gpt-5.4-mini"   →  gpt-5.4-mini-2026-03-17
 "grok"           →  grok-4.20
 "sonar"          →  perplexity/sonar
 ```
+
+### Calling models not in the registry
+
+Hopper ships with a curated model registry, but providers release new models
+frequently. You can call any model from a supported provider without waiting
+for the registry to be updated — just pass `provider=`:
+
+```python
+request = CanonicalRequest(
+    model="claude-sonnet-5-new",   # not in the registry yet
+    provider="anthropic",          # tells Hopper which adapter to use
+    messages=[CanonicalMessage(role="user", content="Hello!")],
+)
+```
+
+Use `extra_params` to pass any parameters alongside it:
+
+```python
+request = CanonicalRequest(
+    model="claude-sonnet-5-new",
+    provider="anthropic",
+    messages=[...],
+    extra_params={"temperature": 0.7, "top_p": 0.9},
+)
+```
+
+`extra_params` works for registered models too — anything in there is forwarded
+to the provider API without filtering.
 
 ## Smoke tests
 

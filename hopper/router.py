@@ -62,15 +62,26 @@ def resolve(request: CanonicalRequest) -> tuple[ProviderAdapter, ModelEntry, lis
     Each adapter module must export a module-level ADAPTER instance.
     """
     model_entry = _MODELS.get(request.model)
+
     if model_entry is None:
-        available = sorted(_MODELS)
-        raise ValueError(
-            f"Unknown model: {request.model!r}. Available models: {available}"
+        if request.provider is None:
+            available = sorted(_MODELS)
+            raise ValueError(
+                f"Unknown model: {request.model!r}. "
+                f"Either use a registered model ID/alias or pass provider= to use "
+                f"passthrough mode. Available models: {available}"
+            )
+        # Passthrough mode: build a minimal ModelEntry with no filtering or defaults.
+        # Everything is passed straight to the provider API as-is.
+        model_entry = ModelEntry(
+            id=request.model,
+            provider=request.provider,
         )
 
     module = importlib.import_module(f"hopper.adapters.{model_entry.provider}")
     adapter: ProviderAdapter = module.ADAPTER
-    return adapter, model_entry, []
+    log = ["Passthrough mode: model not in registry, no param filtering applied."] if not _MODELS.get(request.model) else []
+    return adapter, model_entry, log
 
 
 def apply_defaults_and_filter(
@@ -95,6 +106,9 @@ def apply_defaults_and_filter(
         raw["max_tokens"] = request.max_tokens
     if request.temperature is not None:
         raw["temperature"] = request.temperature
+
+    # extra_params are merged in and always pass through unfiltered
+    raw.update(request.extra_params)
 
     # Apply model-level defaults for params the caller did not supply
     for param, default_value in model_entry.defaults.items():
