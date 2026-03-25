@@ -1,0 +1,11 @@
+provider: grok
+models:
+  - id: grok-4.20
+    aliases:
+      - grok
+    supported_params:
+      - temperature
+      - max_tokens
+    unsupported_params: []
+    defaults:
+      max_tokens: 4096

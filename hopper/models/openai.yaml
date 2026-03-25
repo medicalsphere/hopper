@@ -1,0 +1,32 @@
+provider: openai
+models:
+  - id: gpt-5.4-2026-03-05
+    aliases:
+      - gpt-5.4
+    supported_params:
+      - max_tokens
+    unsupported_params:
+      - temperature
+    defaults:
+      max_tokens: 4096
+
+  - id: gpt-5.4-mini-2026-03-17
+    aliases:
+      - gpt-5.4-mini 
+    supported_params:
+      - max_tokens
+    unsupported_params:
+      - temperature
+    defaults:
+      max_tokens: 4096
+
+  - id: gpt-5.4-nano-2026-03-17
+    aliases:
+      - gpt-5.4-nano
+    # o1 does not support temperature; use default sampling
+    supported_params:
+      - max_tokens
+    unsupported_params:
+      - temperature
+    defaults:
+      max_tokens: 8192

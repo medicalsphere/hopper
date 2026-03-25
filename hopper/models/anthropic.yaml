@@ -1,0 +1,21 @@
+provider: anthropic
+models:
+  - id: claude-opus-4-6
+    aliases:
+      - claude-opus
+    supported_params:
+      - temperature
+      - max_tokens
+    unsupported_params: []
+    defaults:
+      max_tokens: 4096
+
+  - id: claude-sonnet-4-6
+    aliases:
+      - claude-sonnet
+    supported_params:
+      - temperature
+      - max_tokens
+    unsupported_params: []
+    defaults:
+      max_tokens: 8096

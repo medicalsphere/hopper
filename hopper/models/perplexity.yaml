@@ -1,0 +1,11 @@
+provider: perplexity
+models:
+  - id: perplexity/sonar
+    aliases:
+      - sonar
+    supported_params:
+      - temperature
+      - max_tokens
+    unsupported_params: []
+    defaults:
+      max_tokens: 4096

@@ -1,0 +1,11 @@
+provider: together
+models:
+  - id: zai-org/GLM-5
+    aliases:
+      - GLM-5
+    supported_params:
+      - temperature
+      - max_tokens
+    unsupported_params: []
+    defaults:
+      max_tokens: 4096
