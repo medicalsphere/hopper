@@ -48,8 +48,8 @@ class CanonicalRequest:
     # Example: {"effort": "low"} | {"effort": "medium"} | {"effort": "high"}
     reasoning: dict[str, Any] | None = None
     # Extended thinking — Anthropic only.
-    # Example: {"type": "enabled", "budget_tokens": 10000}
-    #          {"type": "adaptive"}  (Opus 4.6 only)
+    # Preferred: {"type": "adaptive"} — recommended for all models.
+    # Manual:    {"type": "enabled", "budget_tokens": 10000} — deprecated on Opus 4.6.
     thinking: dict[str, Any] | None = None
     # Optional provider hint for models not in the registry (passthrough mode).
     # Must be one of the known provider names: anthropic, openai, google,

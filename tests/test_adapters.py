@@ -243,13 +243,13 @@ class TestAnthropicAdapter:
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_sdk.AsyncAnthropic.return_value.messages.create = create_mock
 
-        thinking = {"type": "enabled", "budget_tokens": 10000}
+        thinking = {"type": "adaptive"}
         with patch("hopper.adapters.anthropic._sdk", mock_sdk):
             await ADAPTER.complete(
                 request=_req("claude-sonnet-4-6"),
                 model_entry=_entry("anthropic", "claude-sonnet-4-6"),
                 credentials=CREDS,
-                params={"thinking": thinking, "max_tokens": 16000},
+                params={"thinking": thinking},
                 resolution_log=[],
                 include_raw=False,
             )

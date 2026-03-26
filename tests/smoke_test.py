@@ -117,7 +117,7 @@ def _basic_req(model: str, label: str = "") -> CanonicalRequest:
     if label == "openai":
         kwargs["reasoning"] = {"effort": "high"}
     if label == "anthropic":
-        kwargs["thinking"] = {"type": "enabled", "budget_tokens": 5000}
+        kwargs["thinking"] = {"type": "adaptive"}
     return CanonicalRequest(
         model=model,
         messages=[CanonicalMessage(role="user", content="Say hello in one word. No punctuation.")],
