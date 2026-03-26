@@ -44,6 +44,13 @@ class CanonicalRequest:
     stream: bool = False
     # Escape hatch for provider-specific params; bypasses canonical filtering.
     provider_options: dict[str, Any] = field(default_factory=dict)
+    # Reasoning effort hint — passed to providers that support it (e.g. OpenAI).
+    # Example: {"effort": "low"} | {"effort": "medium"} | {"effort": "high"}
+    reasoning: dict[str, Any] | None = None
+    # Extended thinking — Anthropic only.
+    # Example: {"type": "enabled", "budget_tokens": 10000}
+    #          {"type": "adaptive"}  (Opus 4.6 only)
+    thinking: dict[str, Any] | None = None
     # Optional provider hint for models not in the registry (passthrough mode).
     # Must be one of the known provider names: anthropic, openai, google,
     # together, perplexity, grok.

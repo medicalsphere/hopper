@@ -6,6 +6,7 @@ models:
     supported_params:
       - temperature
       - max_tokens
+      - thinking
     unsupported_params: []
     defaults:
       max_tokens: 4096
@@ -16,6 +17,7 @@ models:
     supported_params:
       - temperature
       - max_tokens
+      - thinking
     unsupported_params: []
     defaults:
       max_tokens: 8096

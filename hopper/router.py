@@ -106,6 +106,10 @@ def apply_defaults_and_filter(
         raw["max_tokens"] = request.max_tokens
     if request.temperature is not None:
         raw["temperature"] = request.temperature
+    if request.reasoning is not None:
+        raw["reasoning"] = request.reasoning
+    if request.thinking is not None:
+        raw["thinking"] = request.thinking
 
     # extra_params are merged in and always pass through unfiltered
     raw.update(request.extra_params)

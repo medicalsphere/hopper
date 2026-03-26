@@ -235,6 +235,60 @@ class TestAnthropicAdapter:
         assert any(p.get("type") == "text" for p in parts)
         assert any(p.get("type") == "image" for p in parts)
 
+    async def test_thinking_param_forwarded_to_api(self):
+        """thinking dict must be passed straight through to the Messages API."""
+        from hopper.adapters.anthropic import ADAPTER
+
+        mock_sdk = MagicMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_sdk.AsyncAnthropic.return_value.messages.create = create_mock
+
+        thinking = {"type": "enabled", "budget_tokens": 10000}
+        with patch("hopper.adapters.anthropic._sdk", mock_sdk):
+            await ADAPTER.complete(
+                request=_req("claude-sonnet-4-6"),
+                model_entry=_entry("anthropic", "claude-sonnet-4-6"),
+                credentials=CREDS,
+                params={"thinking": thinking, "max_tokens": 16000},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert call_kwargs.get("thinking") == thinking
+
+    async def test_thinking_blocks_ignored_in_response(self):
+        """Thinking blocks in the response must not appear in envelope content."""
+        from hopper.adapters.anthropic import ADAPTER
+
+        thinking_block = MagicMock()
+        thinking_block.type = "thinking"
+        thinking_block.thinking = "Let me reason through this..."
+        text_block = MagicMock()
+        text_block.type = "text"
+        text_block.text = "The answer is 42."
+
+        mock_resp = MagicMock()
+        mock_resp.content = [thinking_block, text_block]
+        mock_resp.stop_reason = "end_turn"
+        mock_resp.usage = MagicMock(input_tokens=100, output_tokens=50)
+        mock_resp.model_dump.return_value = {}
+
+        mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(return_value=mock_resp)
+
+        with patch("hopper.adapters.anthropic._sdk", mock_sdk):
+            envelope = await ADAPTER.complete(
+                request=_req("claude-sonnet-4-6"),
+                model_entry=_entry("anthropic", "claude-sonnet-4-6"),
+                credentials=CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        assert envelope.response.content == "The answer is 42."
+
     def test_is_retryable_returns_bool(self):
         from hopper.adapters.anthropic import ADAPTER
         result = ADAPTER.is_retryable(ValueError("random error"))
@@ -392,6 +446,27 @@ class TestOpenAIAdapter:
 
         init_kwargs = mock_client_cls.call_args.kwargs
         assert "openai.com" in init_kwargs.get("base_url", "")
+
+    async def test_reasoning_param_forwarded_to_api(self):
+        """reasoning dict must be passed straight through to the Responses API."""
+        from hopper.adapters.openai import ADAPTER
+
+        mock_client_cls = MagicMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.responses.create = create_mock
+
+        with patch("hopper.adapters.openai.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("gpt-4o", reasoning={"effort": "high"}),
+                model_entry=_entry("openai", "gpt-4o"),
+                credentials=CREDS,
+                params={"reasoning": {"effort": "high"}},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert call_kwargs.get("reasoning") == {"effort": "high"}
 
     async def test_raises_import_error_when_sdk_missing(self):
         from hopper.adapters.openai import ADAPTER

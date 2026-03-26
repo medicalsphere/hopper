@@ -142,6 +142,22 @@ def test_passthrough_raises_without_provider_hint():
         router.resolve(_req("claude-new-model-x"))
 
 
+def test_thinking_passes_through_filter():
+    entry = router._MODELS["claude-sonnet-4-6"]
+    request = _req("claude-sonnet-4-6", thinking={"type": "enabled", "budget_tokens": 5000})
+    filtered, log = router.apply_defaults_and_filter(request, entry)
+    assert filtered["thinking"] == {"type": "enabled", "budget_tokens": 5000}
+    assert not any("Dropped" in msg for msg in log)
+
+
+def test_reasoning_passes_through_filter():
+    entry = router._MODELS["gpt-5.4-2026-03-05"]
+    request = _req("gpt-5.4-2026-03-05", reasoning={"effort": "high"})
+    filtered, log = router.apply_defaults_and_filter(request, entry)
+    assert filtered["reasoning"] == {"effort": "high"}
+    assert not any("Dropped" in msg for msg in log)
+
+
 def test_extra_params_pass_through_filter():
     entry = router._MODELS["claude-sonnet-4-6"]
     request = _req("claude-sonnet-4-6", extra_params={"top_p": 0.9, "top_k": 40})

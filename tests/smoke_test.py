@@ -112,17 +112,23 @@ def _section(title: str) -> None:
 # Test: basic complete / stream
 # ---------------------------------------------------------------------------
 
-def _basic_req(model: str) -> CanonicalRequest:
+def _basic_req(model: str, label: str = "") -> CanonicalRequest:
+    kwargs = {}
+    if label == "openai":
+        kwargs["reasoning"] = {"effort": "high"}
+    if label == "anthropic":
+        kwargs["thinking"] = {"type": "enabled", "budget_tokens": 5000}
     return CanonicalRequest(
         model=model,
         messages=[CanonicalMessage(role="user", content="Say hello in one word. No punctuation.")],
+        **kwargs,
     )
 
 
-async def _test_complete(tag: str, model: str, creds: Credentials) -> bool:
+async def _test_complete(tag: str, label: str, model: str, creds: Credentials) -> bool:
     start = time.monotonic()
     try:
-        env = await hopper.complete(_basic_req(model), creds)
+        env = await hopper.complete(_basic_req(model, label), creds)
         elapsed = (time.monotonic() - start) * 1000
         _print_ok(tag, env.response.content.strip(), elapsed, env.usage)
         return True
@@ -131,11 +137,11 @@ async def _test_complete(tag: str, model: str, creds: Credentials) -> bool:
         return False
 
 
-async def _test_stream(tag: str, model: str, creds: Credentials) -> bool:
+async def _test_stream(tag: str, label: str, model: str, creds: Credentials) -> bool:
     start = time.monotonic()
     try:
         chunks = []
-        async for chunk in hopper.stream(_basic_req(model), creds):
+        async for chunk in hopper.stream(_basic_req(model, label), creds):
             chunks.append(chunk)
         elapsed = (time.monotonic() - start) * 1000
         reply = "".join(c.delta for c in chunks).strip()
@@ -254,9 +260,9 @@ async def main(use_stream: bool, skip_image: bool, skip_multi: bool) -> None:
             continue
         creds = Credentials(api_key=api_key)
         if use_stream:
-            record(await _test_stream(tag, model, creds))
+            record(await _test_stream(tag, label, model, creds))
         else:
-            record(await _test_complete(tag, model, creds))
+            record(await _test_complete(tag, label, model, creds))
 
     # --- image ---
     if not skip_image:

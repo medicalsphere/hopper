@@ -367,62 +367,6 @@ wheels = [
 ]
 
 [[package]]
-name = "hopper"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "pyyaml" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "anthropic" },
-    { name = "google-genai" },
-    { name = "openai" },
-    { name = "together" },
-]
-anthropic = [
-    { name = "anthropic" },
-]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
-google = [
-    { name = "google-genai" },
-]
-grok = [
-    { name = "openai" },
-]
-openai = [
-    { name = "openai" },
-]
-perplexity = [
-    { name = "openai" },
-]
-together = [
-    { name = "together" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.40.0" },
-    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.40.0" },
-    { name = "google-genai", marker = "extra == 'all'", specifier = ">=0.8.0" },
-    { name = "google-genai", marker = "extra == 'google'", specifier = ">=0.8.0" },
-    { name = "openai", marker = "extra == 'all'", specifier = ">=1.0.0" },
-    { name = "openai", marker = "extra == 'grok'", specifier = ">=1.0.0" },
-    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0.0" },
-    { name = "openai", marker = "extra == 'perplexity'", specifier = ">=1.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "together", marker = "extra == 'all'", specifier = ">=1.3.0" },
-    { name = "together", marker = "extra == 'together'", specifier = ">=1.3.0" },
-]
-provides-extras = ["anthropic", "openai", "google", "together", "perplexity", "grok", "all", "dev"]
-
-[[package]]
 name = "httpcore"
 version = "1.0.9"
 source = { registry = "https://pypi.org/simple" }
@@ -573,6 +517,62 @@ sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
 ]
+
+[[package]]
+name = "medicalsphere-hopper"
+version = "0.3.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "anthropic" },
+    { name = "google-genai" },
+    { name = "openai" },
+    { name = "together" },
+]
+anthropic = [
+    { name = "anthropic" },
+]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+google = [
+    { name = "google-genai" },
+]
+grok = [
+    { name = "openai" },
+]
+openai = [
+    { name = "openai" },
+]
+perplexity = [
+    { name = "openai" },
+]
+together = [
+    { name = "together" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.40.0" },
+    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.40.0" },
+    { name = "google-genai", marker = "extra == 'all'", specifier = ">=0.8.0" },
+    { name = "google-genai", marker = "extra == 'google'", specifier = ">=0.8.0" },
+    { name = "openai", marker = "extra == 'all'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'grok'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'perplexity'", specifier = ">=1.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "together", marker = "extra == 'all'", specifier = ">=1.3.0" },
+    { name = "together", marker = "extra == 'together'", specifier = ">=1.3.0" },
+]
+provides-extras = ["anthropic", "openai", "google", "together", "perplexity", "grok", "all", "dev"]
 
 [[package]]
 name = "openai"
