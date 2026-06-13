@@ -6,7 +6,7 @@ Named after Grace Hopper — the original abstraction layer between human intent
 
 ## Supported providers
 
-Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok.
+Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI).
 
 ## Installation
 
@@ -90,6 +90,7 @@ Every model has short aliases so you don't need to remember full IDs:
 "gpt-5.4-mini"   →  gpt-5.4-mini-2026-03-17
 "grok"           →  grok-4.20
 "sonar"          →  perplexity/sonar
+"kimi"           →  kimi-k2.6
 ```
 
 ### Calling models not in the registry
@@ -132,7 +133,7 @@ The smoke test is the one exception: it's a developer tool for verifying real AP
 cp .env.example .env
 # fill in keys for the providers you want to test:
 #   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
-#   TOGETHER_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY
+#   TOGETHER_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY
 ```
 
 Providers without a key are skipped automatically.

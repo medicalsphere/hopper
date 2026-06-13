@@ -520,7 +520,7 @@ wheels = [
 
 [[package]]
 name = "medicalsphere-hopper"
-version = "0.3.1"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
@@ -546,6 +546,9 @@ google = [
 grok = [
     { name = "openai" },
 ]
+kimi = [
+    { name = "openai" },
+]
 openai = [
     { name = "openai" },
 ]
@@ -564,6 +567,7 @@ requires-dist = [
     { name = "google-genai", marker = "extra == 'google'", specifier = ">=0.8.0" },
     { name = "openai", marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'grok'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'kimi'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'perplexity'", specifier = ">=1.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
@@ -572,7 +576,7 @@ requires-dist = [
     { name = "together", marker = "extra == 'all'", specifier = ">=1.3.0" },
     { name = "together", marker = "extra == 'together'", specifier = ">=1.3.0" },
 ]
-provides-extras = ["anthropic", "openai", "google", "together", "perplexity", "grok", "all", "dev"]
+provides-extras = ["anthropic", "openai", "google", "together", "perplexity", "grok", "kimi", "all", "dev"]
 
 [[package]]
 name = "openai"
