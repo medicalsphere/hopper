@@ -75,6 +75,7 @@ PROVIDERS = [
     ("together",   "zai-org/GLM-5",            "TOGETHER_API_KEY",  True),
     ("perplexity", "perplexity/sonar",           "PERPLEXITY_API_KEY", True),
     ("grok",       "grok-4.20",                "XAI_API_KEY",       True),
+    ("kimi",       "kimi-k2.6",                "KIMI_API_KEY",      True),
 ]
 
 GREEN  = "\033[32m"

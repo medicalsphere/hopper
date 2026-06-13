@@ -1,0 +1,12 @@
+provider: kimi
+models:
+  - id: kimi-k2.6
+    aliases:
+      - kimi
+    supported_params:
+      - temperature
+      - max_tokens
+      - thinking
+    unsupported_params: []
+    defaults:
+      max_tokens: 4096

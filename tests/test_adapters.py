@@ -989,6 +989,170 @@ class TestGoogleAdapter:
 
 
 # ---------------------------------------------------------------------------
+# Kimi (Moonshot AI) adapter — OpenAI-compatible chat completions
+# ---------------------------------------------------------------------------
+
+class TestKimiAdapter:
+    """
+    Kimi (Moonshot AI) is OpenAI chat-completions compatible. The OpenAI SDK
+    is pointed at https://api.moonshot.ai/v1. canonical max_tokens becomes
+    max_completion_tokens, and `thinking` is moved into extra_body since it
+    is not a recognised kwarg on chat.completions.create().
+    """
+
+    def _mock_response(self, text: str = "Kimi reply") -> MagicMock:
+        choice = MagicMock()
+        choice.message.content = text
+        choice.finish_reason = "stop"
+        resp = MagicMock()
+        resp.choices = [choice]
+        resp.usage = MagicMock(prompt_tokens=8, completion_tokens=3, total_tokens=11)
+        resp.model_dump.return_value = {}
+        return resp
+
+    async def test_complete_returns_envelope(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.chat.completions.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", mock_client_cls):
+            envelope = await ADAPTER.complete(
+                request=_req("kimi-k2.6"),
+                model_entry=_entry("kimi", "kimi-k2.6"),
+                credentials=CREDS,
+                params={"max_tokens": 256},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        assert envelope.provider == "kimi"
+        assert envelope.response.content == "Kimi reply"
+        assert envelope.response.finish_reason == "stop"
+        assert envelope.usage.total_tokens == 11
+
+    async def test_uses_moonshot_base_url(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.chat.completions.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("kimi-k2.6"),
+                model_entry=_entry("kimi", "kimi-k2.6"),
+                credentials=CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        init_kwargs = mock_client_cls.call_args.kwargs
+        assert "moonshot.ai" in init_kwargs.get("base_url", "")
+
+    async def test_credentials_base_url_overrides_default(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.chat.completions.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("kimi-k2.6"),
+                model_entry=_entry("kimi", "kimi-k2.6"),
+                credentials=Credentials(api_key="test-key", base_url="https://override.example/v1"),
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        init_kwargs = mock_client_cls.call_args.kwargs
+        assert init_kwargs.get("base_url") == "https://override.example/v1"
+
+    async def test_system_prompt_prepended_as_system_message(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        mock_client_cls = MagicMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.chat.completions.create = create_mock
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("kimi-k2.6", system="You are Kimi."),
+                model_entry=_entry("kimi", "kimi-k2.6"),
+                credentials=CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        messages = create_mock.call_args.kwargs["messages"]
+        assert messages[0] == {"role": "system", "content": "You are Kimi."}
+
+    async def test_translates_max_tokens_to_max_completion_tokens(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        mock_client_cls = MagicMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.chat.completions.create = create_mock
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("kimi-k2.6"),
+                model_entry=_entry("kimi", "kimi-k2.6"),
+                credentials=CREDS,
+                params={"max_tokens": 512},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert call_kwargs.get("max_completion_tokens") == 512
+        assert "max_tokens" not in call_kwargs
+
+    async def test_thinking_param_moved_to_extra_body(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        mock_client_cls = MagicMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.chat.completions.create = create_mock
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("kimi-k2.6"),
+                model_entry=_entry("kimi", "kimi-k2.6"),
+                credentials=CREDS,
+                params={"thinking": {"type": "enabled"}},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert "thinking" not in call_kwargs
+        assert call_kwargs["extra_body"] == {"thinking": {"type": "enabled"}}
+
+    async def test_raises_import_error_when_sdk_missing(self):
+        from hopper.adapters.kimi import ADAPTER
+
+        with patch("hopper.adapters.kimi.AsyncOpenAI", None):
+            with pytest.raises(ImportError, match="openai"):
+                await ADAPTER.complete(
+                    request=_req("kimi-k2.6"),
+                    model_entry=_entry("kimi", "kimi-k2.6"),
+                    credentials=CREDS,
+                    params={},
+                    resolution_log=[],
+                    include_raw=False,
+                )
+
+
+# ---------------------------------------------------------------------------
 # hopper.complete() — integration with retry logic
 # ---------------------------------------------------------------------------
 
