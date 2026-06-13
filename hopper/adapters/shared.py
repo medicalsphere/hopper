@@ -100,48 +100,51 @@ async def openai_compat_complete(
         api_key=credentials.api_key,
         base_url=credentials.base_url or default_base_url,
     )
-    messages = build_openai_messages(request)
-    payload: dict = {
-        "model": model_entry.id,
-        "messages": messages,
-        **params,
-        **request.provider_options,
-    }
+    try:
+        messages = build_openai_messages(request)
+        payload: dict = {
+            "model": model_entry.id,
+            "messages": messages,
+            **params,
+            **request.provider_options,
+        }
 
-    start = time.monotonic()
-    timestamp = datetime.now(timezone.utc).isoformat()
+        start = time.monotonic()
+        timestamp = datetime.now(timezone.utc).isoformat()
 
-    resp = await client.chat.completions.create(**payload)
-    latency_ms = (time.monotonic() - start) * 1000
+        resp = await client.chat.completions.create(**payload)
+        latency_ms = (time.monotonic() - start) * 1000
 
-    choice = resp.choices[0]
-    usage = (
-        TokenUsage(
-            input_tokens=resp.usage.prompt_tokens,
-            output_tokens=resp.usage.completion_tokens,
-            total_tokens=resp.usage.total_tokens,
+        choice = resp.choices[0]
+        usage = (
+            TokenUsage(
+                input_tokens=resp.usage.prompt_tokens,
+                output_tokens=resp.usage.completion_tokens,
+                total_tokens=resp.usage.total_tokens,
+            )
+            if resp.usage
+            else None
         )
-        if resp.usage
-        else None
-    )
 
-    # request_sent excludes provider_options (already merged) to stay canonical
-    request_sent = {"model": model_entry.id, "messages": messages, **params}
+        # request_sent excludes provider_options (already merged) to stay canonical
+        request_sent = {"model": model_entry.id, "messages": messages, **params}
 
-    return ResponseEnvelope(
-        response=ModelResponse(
-            content=choice.message.content or "",
-            finish_reason=choice.finish_reason or "stop",
-        ),
-        request_sent=request_sent,
-        param_resolution_log=resolution_log,
-        provider=provider_name,
-        model_id=model_entry.id,
-        latency_ms=latency_ms,
-        timestamp=timestamp,
-        usage=usage,
-        raw=resp.model_dump() if include_raw else None,
-    )
+        return ResponseEnvelope(
+            response=ModelResponse(
+                content=choice.message.content or "",
+                finish_reason=choice.finish_reason or "stop",
+            ),
+            request_sent=request_sent,
+            param_resolution_log=resolution_log,
+            provider=provider_name,
+            model_id=model_entry.id,
+            latency_ms=latency_ms,
+            timestamp=timestamp,
+            usage=usage,
+            raw=resp.model_dump() if include_raw else None,
+        )
+    finally:
+        await client.close()
 
 
 # ---------------------------------------------------------------------------
@@ -163,19 +166,22 @@ async def openai_compat_stream(
         api_key=credentials.api_key,
         base_url=credentials.base_url or default_base_url,
     )
-    messages = build_openai_messages(request)
-    payload: dict = {
-        "model": model_entry.id,
-        "messages": messages,
-        "stream": True,
-        **params,
-        **request.provider_options,
-    }
+    try:
+        messages = build_openai_messages(request)
+        payload: dict = {
+            "model": model_entry.id,
+            "messages": messages,
+            "stream": True,
+            **params,
+            **request.provider_options,
+        }
 
-    async with client.chat.completions.create(**payload) as stream:
-        async for chunk in stream:
-            if not chunk.choices:
-                continue
-            choice = chunk.choices[0]
-            delta = choice.delta.content or ""
-            yield StreamChunk(delta=delta, finish_reason=choice.finish_reason)
+        async with client.chat.completions.create(**payload) as stream:
+            async for chunk in stream:
+                if not chunk.choices:
+                    continue
+                choice = chunk.choices[0]
+                delta = choice.delta.content or ""
+                yield StreamChunk(delta=delta, finish_reason=choice.finish_reason)
+    finally:
+        await client.close()

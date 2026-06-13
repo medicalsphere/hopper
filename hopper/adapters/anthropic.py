@@ -88,49 +88,52 @@ class AnthropicAdapter:
             api_key=credentials.api_key,
             base_url=credentials.base_url or _BASE_URL,
         )
-        messages = _build_messages(request)
+        try:
+            messages = _build_messages(request)
 
-        payload: dict = {
-            "model": model_entry.id,
-            "messages": messages,
-            **params,
-            **request.provider_options,
-        }
-        if request.system:
-            payload["system"] = request.system
+            payload: dict = {
+                "model": model_entry.id,
+                "messages": messages,
+                **params,
+                **request.provider_options,
+            }
+            if request.system:
+                payload["system"] = request.system
 
-        start = time.monotonic()
-        timestamp = datetime.now(timezone.utc).isoformat()
+            start = time.monotonic()
+            timestamp = datetime.now(timezone.utc).isoformat()
 
-        resp = await client.messages.create(**payload)
-        latency_ms = (time.monotonic() - start) * 1000
+            resp = await client.messages.create(**payload)
+            latency_ms = (time.monotonic() - start) * 1000
 
-        content = next(
-            (block.text for block in resp.content if block.type == "text"), ""
-        )
-        usage = TokenUsage(
-            input_tokens=resp.usage.input_tokens,
-            output_tokens=resp.usage.output_tokens,
-            total_tokens=resp.usage.input_tokens + resp.usage.output_tokens,
-        )
-        request_sent = {"model": model_entry.id, "messages": messages, **params}
-        if request.system:
-            request_sent["system"] = request.system
+            content = next(
+                (block.text for block in resp.content if block.type == "text"), ""
+            )
+            usage = TokenUsage(
+                input_tokens=resp.usage.input_tokens,
+                output_tokens=resp.usage.output_tokens,
+                total_tokens=resp.usage.input_tokens + resp.usage.output_tokens,
+            )
+            request_sent = {"model": model_entry.id, "messages": messages, **params}
+            if request.system:
+                request_sent["system"] = request.system
 
-        return ResponseEnvelope(
-            response=ModelResponse(
-                content=content,
-                finish_reason=resp.stop_reason or "end_turn",
-            ),
-            request_sent=request_sent,
-            param_resolution_log=resolution_log,
-            provider="anthropic",
-            model_id=model_entry.id,
-            latency_ms=latency_ms,
-            timestamp=timestamp,
-            usage=usage,
-            raw=resp.model_dump() if include_raw else None,
-        )
+            return ResponseEnvelope(
+                response=ModelResponse(
+                    content=content,
+                    finish_reason=resp.stop_reason or "end_turn",
+                ),
+                request_sent=request_sent,
+                param_resolution_log=resolution_log,
+                provider="anthropic",
+                model_id=model_entry.id,
+                latency_ms=latency_ms,
+                timestamp=timestamp,
+                usage=usage,
+                raw=resp.model_dump() if include_raw else None,
+            )
+        finally:
+            await client.close()
 
     async def stream(
         self,
@@ -146,28 +149,31 @@ class AnthropicAdapter:
             api_key=credentials.api_key,
             base_url=credentials.base_url or _BASE_URL,
         )
-        messages = _build_messages(request)
+        try:
+            messages = _build_messages(request)
 
-        payload: dict = {
-            "model": model_entry.id,
-            "messages": messages,
-            **params,
-            **request.provider_options,
-        }
-        if request.system:
-            payload["system"] = request.system
+            payload: dict = {
+                "model": model_entry.id,
+                "messages": messages,
+                **params,
+                **request.provider_options,
+            }
+            if request.system:
+                payload["system"] = request.system
 
-        async with client.messages.stream(**payload) as stream:
-            async for text in stream.text_stream:
-                yield StreamChunk(delta=text)
+            async with client.messages.stream(**payload) as stream:
+                async for text in stream.text_stream:
+                    yield StreamChunk(delta=text)
 
-            final = await stream.get_final_message()
-            usage = TokenUsage(
-                input_tokens=final.usage.input_tokens,
-                output_tokens=final.usage.output_tokens,
-                total_tokens=final.usage.input_tokens + final.usage.output_tokens,
-            )
-            yield StreamChunk(delta="", finish_reason=final.stop_reason, usage=usage)
+                final = await stream.get_final_message()
+                usage = TokenUsage(
+                    input_tokens=final.usage.input_tokens,
+                    output_tokens=final.usage.output_tokens,
+                    total_tokens=final.usage.input_tokens + final.usage.output_tokens,
+                )
+                yield StreamChunk(delta="", finish_reason=final.stop_reason, usage=usage)
+        finally:
+            await client.close()
 
     def is_retryable(self, error: Exception) -> bool:
         return _is_retryable(error)

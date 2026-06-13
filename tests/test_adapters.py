@@ -67,6 +67,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -91,6 +92,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_sdk.AsyncAnthropic.return_value.messages.create = create_mock
 
@@ -111,6 +113,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_sdk.AsyncAnthropic.return_value.messages.create = create_mock
 
@@ -130,6 +133,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -151,6 +155,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -171,6 +176,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -205,6 +211,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_sdk.AsyncAnthropic.return_value.messages.create = create_mock
 
@@ -240,6 +247,7 @@ class TestAnthropicAdapter:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_sdk.AsyncAnthropic.return_value.messages.create = create_mock
 
@@ -275,6 +283,7 @@ class TestAnthropicAdapter:
         mock_resp.model_dump.return_value = {}
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(return_value=mock_resp)
 
         with patch("hopper.adapters.anthropic._sdk", mock_sdk):
@@ -319,6 +328,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.responses.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -343,6 +353,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -364,6 +375,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -385,6 +397,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -409,6 +422,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -430,6 +444,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.responses.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -452,6 +467,7 @@ class TestOpenAIAdapter:
         from hopper.adapters.openai import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -507,6 +523,7 @@ class TestPerplexityAdapter:
         from hopper.adapters.perplexity import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.responses.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -530,6 +547,7 @@ class TestPerplexityAdapter:
         from hopper.adapters.perplexity import ADAPTER, _BASE_URL
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.responses.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -552,6 +570,7 @@ class TestPerplexityAdapter:
         from hopper.adapters.perplexity import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -575,6 +594,7 @@ class TestPerplexityAdapter:
         from hopper.adapters.perplexity import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -617,6 +637,7 @@ class TestTogetherAdapter:
         from hopper.adapters.together import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.chat.completions.create = AsyncMock(
             return_value=self._mock_together_response()
         )
@@ -639,6 +660,7 @@ class TestTogetherAdapter:
         from hopper.adapters.together import ADAPTER
 
         mock_together_cls = MagicMock()
+        mock_together_cls.return_value.close = AsyncMock()
         mock_together_cls.return_value.chat.completions.create = AsyncMock(
             return_value=self._mock_together_response()
         )
@@ -662,6 +684,7 @@ class TestTogetherAdapter:
         from hopper.adapters.together import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_together_response())
         mock_client_cls.return_value.chat.completions.create = create_mock
 
@@ -717,6 +740,7 @@ class TestGrokAdapter:
         from hopper.adapters.grok import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.responses.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -739,6 +763,7 @@ class TestGrokAdapter:
         from hopper.adapters.grok import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.responses.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -761,6 +786,7 @@ class TestGrokAdapter:
         from hopper.adapters.grok import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         responses_create = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = responses_create
 
@@ -782,6 +808,7 @@ class TestGrokAdapter:
         from hopper.adapters.grok import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -804,6 +831,7 @@ class TestGrokAdapter:
         from hopper.adapters.grok import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -825,6 +853,7 @@ class TestGrokAdapter:
         from hopper.adapters.grok import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.responses.create = create_mock
 
@@ -882,6 +911,7 @@ class TestGoogleAdapter:
 
     def _mock_sdk_and_types(self, response: MagicMock):
         mock_sdk = MagicMock()
+        mock_sdk.Client.return_value.aio.aclose = AsyncMock()
         mock_sdk.Client.return_value.aio.models.generate_content = AsyncMock(
             return_value=response
         )
@@ -1014,6 +1044,7 @@ class TestKimiAdapter:
         from hopper.adapters.kimi import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.chat.completions.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -1037,6 +1068,7 @@ class TestKimiAdapter:
         from hopper.adapters.kimi import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.chat.completions.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -1058,6 +1090,7 @@ class TestKimiAdapter:
         from hopper.adapters.kimi import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         mock_client_cls.return_value.chat.completions.create = AsyncMock(
             return_value=self._mock_response()
         )
@@ -1079,6 +1112,7 @@ class TestKimiAdapter:
         from hopper.adapters.kimi import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.chat.completions.create = create_mock
 
@@ -1099,6 +1133,7 @@ class TestKimiAdapter:
         from hopper.adapters.kimi import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.chat.completions.create = create_mock
 
@@ -1120,6 +1155,7 @@ class TestKimiAdapter:
         from hopper.adapters.kimi import ADAPTER
 
         mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
         create_mock = AsyncMock(return_value=self._mock_response())
         mock_client_cls.return_value.chat.completions.create = create_mock
 
@@ -1164,6 +1200,7 @@ class TestCompleteRetryLoop:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         good_resp = MagicMock()
         good_block = MagicMock()
         good_block.type = "text"
@@ -1208,6 +1245,7 @@ class TestCompleteRetryLoop:
         from hopper.adapters.anthropic import ADAPTER
 
         mock_sdk = MagicMock()
+        mock_sdk.AsyncAnthropic.return_value.close = AsyncMock()
         mock_sdk.AsyncAnthropic.return_value.messages.create = AsyncMock(
             side_effect=ValueError("bad request")
         )

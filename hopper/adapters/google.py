@@ -131,57 +131,60 @@ class GoogleAdapter:
             )
 
         client = _sdk.Client(api_key=credentials.api_key)
-        contents = _build_contents(request)
-        config = _build_config(params, request.system)
+        try:
+            contents = _build_contents(request)
+            config = _build_config(params, request.system)
 
-        start = time.monotonic()
-        timestamp = datetime.now(timezone.utc).isoformat()
+            start = time.monotonic()
+            timestamp = datetime.now(timezone.utc).isoformat()
 
-        resp = await client.aio.models.generate_content(
-            model=model_entry.id,
-            contents=contents,
-            config=config,
-        )
-        latency_ms = (time.monotonic() - start) * 1000
-
-        usage = None
-        if resp.usage_metadata:
-            usage = TokenUsage(
-                input_tokens=resp.usage_metadata.prompt_token_count or 0,
-                output_tokens=resp.usage_metadata.candidates_token_count or 0,
-                total_tokens=resp.usage_metadata.total_token_count or 0,
+            resp = await client.aio.models.generate_content(
+                model=model_entry.id,
+                contents=contents,
+                config=config,
             )
+            latency_ms = (time.monotonic() - start) * 1000
 
-        # Build a JSON-serialisable request_sent from canonical data, not SDK objects
-        translated_params = {
-            ("max_output_tokens" if k == "max_tokens" else k): v
-            for k, v in params.items()
-        }
-        request_sent: dict = {"model": model_entry.id, "config": translated_params}
-        if request.system:
-            request_sent["system_instruction"] = request.system
+            usage = None
+            if resp.usage_metadata:
+                usage = TokenUsage(
+                    input_tokens=resp.usage_metadata.prompt_token_count or 0,
+                    output_tokens=resp.usage_metadata.candidates_token_count or 0,
+                    total_tokens=resp.usage_metadata.total_token_count or 0,
+                )
 
-        raw = None
-        if include_raw:
-            try:
-                raw = resp.model_dump()
-            except AttributeError:
-                raw = str(resp)
+            # Build a JSON-serialisable request_sent from canonical data, not SDK objects
+            translated_params = {
+                ("max_output_tokens" if k == "max_tokens" else k): v
+                for k, v in params.items()
+            }
+            request_sent: dict = {"model": model_entry.id, "config": translated_params}
+            if request.system:
+                request_sent["system_instruction"] = request.system
 
-        return ResponseEnvelope(
-            response=ModelResponse(
-                content=resp.text or "",
-                finish_reason=_finish_reason(resp),
-            ),
-            request_sent=request_sent,
-            param_resolution_log=resolution_log,
-            provider="google",
-            model_id=model_entry.id,
-            latency_ms=latency_ms,
-            timestamp=timestamp,
-            usage=usage,
-            raw=raw,
-        )
+            raw = None
+            if include_raw:
+                try:
+                    raw = resp.model_dump()
+                except AttributeError:
+                    raw = str(resp)
+
+            return ResponseEnvelope(
+                response=ModelResponse(
+                    content=resp.text or "",
+                    finish_reason=_finish_reason(resp),
+                ),
+                request_sent=request_sent,
+                param_resolution_log=resolution_log,
+                provider="google",
+                model_id=model_entry.id,
+                latency_ms=latency_ms,
+                timestamp=timestamp,
+                usage=usage,
+                raw=raw,
+            )
+        finally:
+            await client.aio.aclose()
 
     async def stream(
         self,
@@ -196,15 +199,18 @@ class GoogleAdapter:
             )
 
         client = _sdk.Client(api_key=credentials.api_key)
-        contents = _build_contents(request)
-        config = _build_config(params, request.system)
+        try:
+            contents = _build_contents(request)
+            config = _build_config(params, request.system)
 
-        async for chunk in await client.aio.models.generate_content_stream(
-            model=model_entry.id,
-            contents=contents,
-            config=config,
-        ):
-            yield StreamChunk(delta=chunk.text or "")
+            async for chunk in await client.aio.models.generate_content_stream(
+                model=model_entry.id,
+                contents=contents,
+                config=config,
+            ):
+                yield StreamChunk(delta=chunk.text or "")
+        finally:
+            await client.aio.aclose()
 
     def is_retryable(self, error: Exception) -> bool:
         return _is_retryable(error)

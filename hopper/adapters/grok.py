@@ -123,49 +123,51 @@ class GrokAdapter:
             api_key=credentials.api_key,
             base_url=credentials.base_url or _BASE_URL,
         )
+        try:
+            input_messages = _build_input(request)
+            api_params = _translate_params(params)
 
-        input_messages = _build_input(request)
-        api_params = _translate_params(params)
+            payload: dict = {
+                "model": model_entry.id,
+                "input": input_messages,
+                **api_params,
+                **request.provider_options,
+            }
 
-        payload: dict = {
-            "model": model_entry.id,
-            "input": input_messages,
-            **api_params,
-            **request.provider_options,
-        }
+            start = time.monotonic()
+            timestamp = datetime.now(timezone.utc).isoformat()
 
-        start = time.monotonic()
-        timestamp = datetime.now(timezone.utc).isoformat()
+            resp = await client.responses.create(**payload)
+            latency_ms = (time.monotonic() - start) * 1000
 
-        resp = await client.responses.create(**payload)
-        latency_ms = (time.monotonic() - start) * 1000
-
-        usage = (
-            TokenUsage(
-                input_tokens=resp.usage.input_tokens,
-                output_tokens=resp.usage.output_tokens,
-                total_tokens=resp.usage.total_tokens,
+            usage = (
+                TokenUsage(
+                    input_tokens=resp.usage.input_tokens,
+                    output_tokens=resp.usage.output_tokens,
+                    total_tokens=resp.usage.total_tokens,
+                )
+                if resp.usage
+                else None
             )
-            if resp.usage
-            else None
-        )
 
-        request_sent: dict = {"model": model_entry.id, "input": input_messages, **api_params}
+            request_sent: dict = {"model": model_entry.id, "input": input_messages, **api_params}
 
-        return ResponseEnvelope(
-            response=ModelResponse(
-                content=resp.output_text or "",
-                finish_reason=_finish_reason(resp),
-            ),
-            request_sent=request_sent,
-            param_resolution_log=resolution_log,
-            provider=_PROVIDER,
-            model_id=model_entry.id,
-            latency_ms=latency_ms,
-            timestamp=timestamp,
-            usage=usage,
-            raw=resp.model_dump() if include_raw else None,
-        )
+            return ResponseEnvelope(
+                response=ModelResponse(
+                    content=resp.output_text or "",
+                    finish_reason=_finish_reason(resp),
+                ),
+                request_sent=request_sent,
+                param_resolution_log=resolution_log,
+                provider=_PROVIDER,
+                model_id=model_entry.id,
+                latency_ms=latency_ms,
+                timestamp=timestamp,
+                usage=usage,
+                raw=resp.model_dump() if include_raw else None,
+            )
+        finally:
+            await client.close()
 
     async def stream(
         self,
@@ -181,36 +183,38 @@ class GrokAdapter:
             api_key=credentials.api_key,
             base_url=credentials.base_url or _BASE_URL,
         )
+        try:
+            input_messages = _build_input(request)
+            api_params = _translate_params(params)
 
-        input_messages = _build_input(request)
-        api_params = _translate_params(params)
+            stream_params: dict = {
+                "model": model_entry.id,
+                "input": input_messages,
+                **api_params,
+                **request.provider_options,
+            }
 
-        stream_params: dict = {
-            "model": model_entry.id,
-            "input": input_messages,
-            **api_params,
-            **request.provider_options,
-        }
+            async with client.responses.stream(**stream_params) as stream:
+                async for text in stream.text_deltas:
+                    yield StreamChunk(delta=text)
 
-        async with client.responses.stream(**stream_params) as stream:
-            async for text in stream.text_deltas:
-                yield StreamChunk(delta=text)
-
-            final = await stream.get_final_response()
-            final_usage = (
-                TokenUsage(
-                    input_tokens=final.usage.input_tokens,
-                    output_tokens=final.usage.output_tokens,
-                    total_tokens=final.usage.total_tokens,
+                final = await stream.get_final_response()
+                final_usage = (
+                    TokenUsage(
+                        input_tokens=final.usage.input_tokens,
+                        output_tokens=final.usage.output_tokens,
+                        total_tokens=final.usage.total_tokens,
+                    )
+                    if final.usage
+                    else None
                 )
-                if final.usage
-                else None
-            )
-            yield StreamChunk(
-                delta="",
-                finish_reason=_finish_reason(final),
-                usage=final_usage,
-            )
+                yield StreamChunk(
+                    delta="",
+                    finish_reason=_finish_reason(final),
+                    usage=final_usage,
+                )
+        finally:
+            await client.close()
 
     def is_retryable(self, error: Exception) -> bool:
         return _is_retryable(error)
