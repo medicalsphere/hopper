@@ -1189,6 +1189,176 @@ class TestKimiAdapter:
 
 
 # ---------------------------------------------------------------------------
+# Z.AI adapter — OpenAI-compatible chat completions via api.z.ai
+# ---------------------------------------------------------------------------
+
+class TestZaiAdapter:
+    """
+    Z.AI uses the OpenAI chat completions API pointed at https://api.z.ai/api/paas/v4/.
+    max_tokens is passed through unchanged; thinking goes into extra_body.
+    """
+
+    def _mock_response(self, text: str = "Z.AI reply") -> MagicMock:
+        choice = MagicMock()
+        choice.message.content = text
+        choice.finish_reason = "stop"
+        resp = MagicMock()
+        resp.choices = [choice]
+        resp.usage = MagicMock(prompt_tokens=8, completion_tokens=3, total_tokens=11)
+        resp.model_dump.return_value = {}
+        return resp
+
+    async def test_complete_returns_envelope(self):
+        from hopper.adapters.zai import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        mock_client_cls.return_value.chat.completions.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", mock_client_cls):
+            envelope = await ADAPTER.complete(
+                request=_req("glm-5.2"),
+                model_entry=_entry("zai", "glm-5.2"),
+                credentials=CREDS,
+                params={"max_tokens": 256},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        assert envelope.provider == "zai"
+        assert envelope.response.content == "Z.AI reply"
+        assert envelope.response.finish_reason == "stop"
+        assert envelope.usage.total_tokens == 11
+
+    async def test_uses_zai_base_url(self):
+        from hopper.adapters.zai import ADAPTER, _BASE_URL
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        mock_client_cls.return_value.chat.completions.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("glm-5.2"),
+                model_entry=_entry("zai", "glm-5.2"),
+                credentials=CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        init_kwargs = mock_client_cls.call_args.kwargs
+        assert init_kwargs.get("base_url") == _BASE_URL
+
+    async def test_credentials_base_url_overrides_default(self):
+        from hopper.adapters.zai import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        mock_client_cls.return_value.chat.completions.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("glm-5.2"),
+                model_entry=_entry("zai", "glm-5.2"),
+                credentials=Credentials(api_key="test-key", base_url="https://custom.example/v1"),
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        init_kwargs = mock_client_cls.call_args.kwargs
+        assert init_kwargs.get("base_url") == "https://custom.example/v1"
+
+    async def test_system_prompt_prepended_as_system_message(self):
+        from hopper.adapters.zai import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.chat.completions.create = create_mock
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("glm-5.2", system="You are a helpful assistant."),
+                model_entry=_entry("zai", "glm-5.2"),
+                credentials=CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        messages = create_mock.call_args.kwargs["messages"]
+        assert messages[0] == {"role": "system", "content": "You are a helpful assistant."}
+
+    async def test_max_tokens_passed_through_unchanged(self):
+        """Z.AI accepts max_tokens directly — no renaming."""
+        from hopper.adapters.zai import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.chat.completions.create = create_mock
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("glm-5.2"),
+                model_entry=_entry("zai", "glm-5.2"),
+                credentials=CREDS,
+                params={"max_tokens": 512},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert call_kwargs.get("max_tokens") == 512
+        assert "max_completion_tokens" not in call_kwargs
+        assert "max_output_tokens" not in call_kwargs
+
+    async def test_thinking_param_moved_to_extra_body(self):
+        from hopper.adapters.zai import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.chat.completions.create = create_mock
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("glm-5.2"),
+                model_entry=_entry("zai", "glm-5.2"),
+                credentials=CREDS,
+                params={"thinking": {"type": "enabled"}},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert "thinking" not in call_kwargs
+        assert call_kwargs["extra_body"] == {"thinking": {"type": "enabled"}}
+
+    async def test_raises_import_error_when_sdk_missing(self):
+        from hopper.adapters.zai import ADAPTER
+
+        with patch("hopper.adapters.zai.AsyncOpenAI", None):
+            with pytest.raises(ImportError, match="openai"):
+                await ADAPTER.complete(
+                    request=_req("glm-5.2"),
+                    model_entry=_entry("zai", "glm-5.2"),
+                    credentials=CREDS,
+                    params={},
+                    resolution_log=[],
+                    include_raw=False,
+                )
+
+
+# ---------------------------------------------------------------------------
 # hopper.complete() — integration with retry logic
 # ---------------------------------------------------------------------------
 

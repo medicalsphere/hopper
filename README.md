@@ -6,20 +6,30 @@ Named after Grace Hopper — the original abstraction layer between human intent
 
 ## Supported providers
 
-Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI).
+Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI), Z.AI (GLM).
 
 ## Installation
+
+```bash
+pip install medicalsphere-hopper
+```
+
+Install only the provider SDKs you need:
+
+```bash
+pip install "medicalsphere-hopper[anthropic]"       # Anthropic
+pip install "medicalsphere-hopper[openai]"          # OpenAI, Perplexity, Grok, Kimi, Z.AI
+pip install "medicalsphere-hopper[google]"          # Google Gemini
+pip install "medicalsphere-hopper[together]"        # Together AI
+pip install "medicalsphere-hopper[anthropic,openai,google,together]"  # all
+```
+
+For local development:
 
 ```bash
 git clone <repo>
 cd hopper
 uv sync --all-extras
-```
-
-Or install only the providers you need:
-
-```bash
-uv pip install -e ".[anthropic,openai,google]"
 ```
 
 ## Usage
@@ -91,6 +101,8 @@ Every model has short aliases so you don't need to remember full IDs:
 "grok"           →  grok-4.20
 "sonar"          →  perplexity/sonar
 "kimi"           →  kimi-k2.6
+"glm"            →  glm-5.2
+"zai"            →  glm-5.2
 ```
 
 ### Calling models not in the registry
@@ -133,7 +145,7 @@ The smoke test is the one exception: it's a developer tool for verifying real AP
 cp .env.example .env
 # fill in keys for the providers you want to test:
 #   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
-#   TOGETHER_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY
+#   TOGETHER_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY
 ```
 
 Providers without a key are skipped automatically.
