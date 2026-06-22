@@ -138,7 +138,10 @@ class TogetherAdapter:
                 if not chunk.choices:
                     continue
                 choice = chunk.choices[0]
-                yield StreamChunk(delta=choice.delta.content or "", finish_reason=choice.finish_reason)
+                if choice.delta.content is not None:
+                    yield StreamChunk(delta=choice.delta.content, finish_reason=choice.finish_reason)
+                elif choice.finish_reason:
+                    yield StreamChunk(delta="", finish_reason=choice.finish_reason)
         finally:
             await client.close()
 

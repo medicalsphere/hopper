@@ -106,8 +106,8 @@ class AnthropicAdapter:
             resp = await client.messages.create(**payload)
             latency_ms = (time.monotonic() - start) * 1000
 
-            content = next(
-                (block.text for block in resp.content if block.type == "text"), ""
+            content = "".join(
+                block.text for block in resp.content if block.type == "text"
             )
             usage = TokenUsage(
                 input_tokens=resp.usage.input_tokens,

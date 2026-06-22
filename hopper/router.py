@@ -77,6 +77,13 @@ def resolve(request: CanonicalRequest) -> tuple[ProviderAdapter, ModelEntry, lis
             id=request.model,
             provider=request.provider,
         )
+    elif request.provider is not None and request.provider != model_entry.provider:
+        # Provider override: caller explicitly requested a different provider/adapter.
+        # Use passthrough mode with the overridden provider.
+        model_entry = ModelEntry(
+            id=request.model,
+            provider=request.provider,
+        )
 
     module = importlib.import_module(f"hopper.adapters.{model_entry.provider}")
     adapter: ProviderAdapter = module.ADAPTER

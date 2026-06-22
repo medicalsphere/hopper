@@ -197,8 +197,9 @@ class OpenAIAdapter:
                 stream_params["instructions"] = request.system
 
             async with client.responses.stream(**stream_params) as stream:
-                async for text in stream.text_deltas:
-                    yield StreamChunk(delta=text)
+                async for event in stream:
+                    if event.type == "response.output_text.delta":
+                        yield StreamChunk(delta=event.delta)
 
                 final = await stream.get_final_response()
                 final_usage = (

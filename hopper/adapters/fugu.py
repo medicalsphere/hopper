@@ -5,8 +5,7 @@ Install: pip install openai
 Docs: https://console.sakana.ai/models
 
 Fugu exposes an OpenAI-compatible Responses API. Key differences from OpenAI:
-- base_url is not fixed; callers must supply it via Credentials.base_url.
-  The adapter normalises it: strips trailing slash and appends /v1 if absent.
+- Fixed base URL: https://api.sakana.ai/v1
 - System prompt goes in `instructions` (same as Perplexity/OpenAI).
 - `max_tokens` is renamed to `max_output_tokens`.
 - `temperature` is accepted by the server but silently ignored; the router
@@ -37,23 +36,12 @@ except ImportError:
     AsyncOpenAI = None  # type: ignore[assignment,misc]
 
 _PROVIDER = "fugu"
+_BASE_URL = "https://api.sakana.ai/v1"
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _resolve_base_url(credentials: Credentials) -> str:
-    if not credentials.base_url:
-        raise ValueError(
-            "Fugu requires a base URL. Pass it via Credentials(base_url=...) "
-            "or set FUGU_BASE_URL in your environment and forward it to the caller."
-        )
-    url = credentials.base_url.rstrip("/")
-    if not url.endswith("/v1"):
-        url = f"{url}/v1"
-    return url
-
 
 def _build_input(request: CanonicalRequest) -> list[dict]:
     """Build the Responses API `input` array. System prompt goes in `instructions`."""
@@ -127,7 +115,7 @@ class FuguAdapter:
 
         client = AsyncOpenAI(
             api_key=credentials.api_key,
-            base_url=_resolve_base_url(credentials),
+            base_url=_BASE_URL,
         )
         try:
             input_messages = _build_input(request)
@@ -191,7 +179,7 @@ class FuguAdapter:
 
         client = AsyncOpenAI(
             api_key=credentials.api_key,
-            base_url=_resolve_base_url(credentials),
+            base_url=_BASE_URL,
         )
         try:
             input_messages = _build_input(request)
@@ -207,8 +195,9 @@ class FuguAdapter:
                 stream_params["instructions"] = request.system
 
             async with client.responses.stream(**stream_params) as stream:
-                async for text in stream.text_deltas:
-                    yield StreamChunk(delta=text)
+                async for event in stream:
+                    if event.type == "response.output_text.delta":
+                        yield StreamChunk(delta=event.delta)
 
                 final = await stream.get_final_response()
                 final_usage = (

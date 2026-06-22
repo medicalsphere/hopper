@@ -191,25 +191,26 @@ class PerplexityAdapter:
             if request.system:
                 stream_params["instructions"] = request.system
 
-            async with client.responses.stream(**stream_params) as stream:
-                async for text in stream.text_deltas:
-                    yield StreamChunk(delta=text)
-
-                final = await stream.get_final_response()
-                final_usage = (
-                    TokenUsage(
-                        input_tokens=final.usage.input_tokens,
-                        output_tokens=final.usage.output_tokens,
-                        total_tokens=final.usage.total_tokens,
+            # Perplexity omits response.content_part.added, which breaks the
+            # OpenAI SDK state machine inside client.responses.stream(). Use
+            # create(stream=True) instead to get raw events without the accumulator.
+            stream_params["stream"] = True
+            raw_stream = await client.responses.create(**stream_params)
+            async for event in raw_stream:
+                if event.type == "response.output_text.delta":
+                    yield StreamChunk(delta=event.delta)
+                elif event.type == "response.completed":
+                    resp = event.response
+                    usage = (
+                        TokenUsage(
+                            input_tokens=resp.usage.input_tokens,
+                            output_tokens=resp.usage.output_tokens,
+                            total_tokens=resp.usage.total_tokens,
+                        )
+                        if resp.usage
+                        else None
                     )
-                    if final.usage
-                    else None
-                )
-                yield StreamChunk(
-                    delta="",
-                    finish_reason=_finish_reason(final),
-                    usage=final_usage,
-                )
+                    yield StreamChunk(delta="", finish_reason=_finish_reason(resp), usage=usage)
         finally:
             await client.close()
 

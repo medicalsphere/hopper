@@ -181,7 +181,9 @@ async def openai_compat_stream(
                 if not chunk.choices:
                     continue
                 choice = chunk.choices[0]
-                delta = choice.delta.content or ""
-                yield StreamChunk(delta=delta, finish_reason=choice.finish_reason)
+                if choice.delta.content is not None:
+                    yield StreamChunk(delta=choice.delta.content, finish_reason=choice.finish_reason)
+                elif choice.finish_reason:
+                    yield StreamChunk(delta="", finish_reason=choice.finish_reason)
     finally:
         await client.close()

@@ -107,21 +107,6 @@ Every model has short aliases so you don't need to remember full IDs:
 "fugu-ultra"     →  fugu-ultra
 ```
 
-### Providers that require a base URL
-
-Some providers (currently Fugu/Sakana AI) don't have a fixed public endpoint — the base URL is issued per account. Pass it via `Credentials`:
-
-```python
-creds = Credentials(
-    api_key=os.environ["FUGU_API_KEY"],
-    base_url=os.environ["FUGU_BASE_URL"],  # e.g. https://...sakana.ai/...
-)
-envelope = asyncio.run(hopper.complete(
-    CanonicalRequest(model="fugu-ultra", messages=[...]),
-    creds,
-))
-```
-
 ### Calling models not in the registry
 
 Hopper ships with a curated model registry, but providers release new models
@@ -162,8 +147,7 @@ The smoke test is the one exception: it's a developer tool for verifying real AP
 cp .env.example .env
 # fill in keys for the providers you want to test:
 #   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, TOGETHER_API_KEY,
-#   PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY,
-#   FUGU_API_KEY, FUGU_BASE_URL
+#   PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY, FUGU_API_KEY
 ```
 
 Providers without a key are skipped automatically.

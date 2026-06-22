@@ -77,7 +77,7 @@ PROVIDERS = [
     ("grok",       "grok-4.20",                "XAI_API_KEY",        True,  None),
     ("kimi",       "kimi-k2.6",                "KIMI_API_KEY",       True,  None),
     ("zai",        "glm-5.2",                  "ZAI_API_KEY",        True,  None),
-    ("fugu",       "fugu",                     "FUGU_API_KEY",       False, "FUGU_BASE_URL"),
+    ("fugu",       "fugu",                     "FUGU_API_KEY",       False, None),
 ]
 
 

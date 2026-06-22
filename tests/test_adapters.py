@@ -1359,18 +1359,17 @@ class TestZaiAdapter:
 
 
 # ---------------------------------------------------------------------------
-# Fugu (Sakana AI) adapter — OpenAI Responses API via variable base URL
+# Fugu (Sakana AI) adapter — OpenAI Responses API via api.sakana.ai
 # ---------------------------------------------------------------------------
 
-FUGU_CREDS = Credentials(api_key="test-key", base_url="https://api.example.com/fugu")
+FUGU_CREDS = Credentials(api_key="test-key")
 
 
 class TestFuguAdapter:
     """
     Fugu uses the OpenAI Responses API (client.responses.create / .stream).
-    base_url is required — raises ValueError if absent.
+    Fixed base URL: https://api.sakana.ai/v1
     System prompt goes in instructions=. max_tokens → max_output_tokens.
-    The adapter normalises the base URL: strips trailing slash, appends /v1.
     """
 
     def _mock_response(self, text: str = "Fugu reply") -> MagicMock:
@@ -1406,22 +1405,8 @@ class TestFuguAdapter:
         assert envelope.response.content == "Fugu reply"
         assert envelope.response.finish_reason == "stop"
 
-    async def test_requires_base_url(self):
-        from hopper.adapters.fugu import ADAPTER
-
-        with pytest.raises(ValueError, match="base URL"):
-            await ADAPTER.complete(
-                request=_req("fugu"),
-                model_entry=_entry("fugu", "fugu"),
-                credentials=CREDS,  # no base_url
-                params={},
-                resolution_log=[],
-                include_raw=False,
-            )
-
-    async def test_normalises_base_url_appends_v1(self):
-        """base_url without /v1 must have /v1 appended."""
-        from hopper.adapters.fugu import ADAPTER
+    async def test_uses_sakana_base_url(self):
+        from hopper.adapters.fugu import ADAPTER, _BASE_URL
 
         mock_client_cls = MagicMock()
         mock_client_cls.return_value.close = AsyncMock()
@@ -1429,20 +1414,18 @@ class TestFuguAdapter:
             return_value=self._mock_response()
         )
 
-        creds_no_v1 = Credentials(api_key="k", base_url="https://api.example.com/fugu/")
         with patch("hopper.adapters.fugu.AsyncOpenAI", mock_client_cls):
             await ADAPTER.complete(
                 request=_req("fugu"),
                 model_entry=_entry("fugu", "fugu"),
-                credentials=creds_no_v1,
+                credentials=FUGU_CREDS,
                 params={},
                 resolution_log=[],
                 include_raw=False,
             )
 
         init_kwargs = mock_client_cls.call_args.kwargs
-        assert init_kwargs["base_url"].endswith("/v1")
-        assert not init_kwargs["base_url"].endswith("//v1")
+        assert init_kwargs["base_url"] == _BASE_URL
 
     async def test_system_prompt_sent_as_instructions(self):
         from hopper.adapters.fugu import ADAPTER

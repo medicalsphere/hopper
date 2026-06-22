@@ -208,7 +208,22 @@ class GoogleAdapter:
                 contents=contents,
                 config=config,
             ):
-                yield StreamChunk(delta=chunk.text or "")
+                finish_reason = None
+                usage = None
+                if chunk.candidates and chunk.candidates[0].finish_reason:
+                    fr = chunk.candidates[0].finish_reason
+                    finish_reason = fr.name.lower() if hasattr(fr, "name") else str(fr)
+                if chunk.usage_metadata:
+                    m = chunk.usage_metadata
+                    usage = TokenUsage(
+                        input_tokens=m.prompt_token_count or 0,
+                        output_tokens=m.candidates_token_count or 0,
+                        total_tokens=m.total_token_count or 0,
+                    )
+                if chunk.text:
+                    yield StreamChunk(delta=chunk.text, finish_reason=finish_reason, usage=usage)
+                elif finish_reason:
+                    yield StreamChunk(delta="", finish_reason=finish_reason, usage=usage)
         finally:
             await client.aio.aclose()
 
