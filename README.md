@@ -6,7 +6,7 @@ Named after Grace Hopper — the original abstraction layer between human intent
 
 ## Supported providers
 
-Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI), Z.AI (GLM).
+Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI), Z.AI (GLM), Fugu (Sakana AI).
 
 ## Installation
 
@@ -103,6 +103,23 @@ Every model has short aliases so you don't need to remember full IDs:
 "kimi"           →  kimi-k2.6
 "glm"            →  glm-5.2
 "zai"            →  glm-5.2
+"fugu"           →  fugu       (model ID, no alias needed)
+"fugu-ultra"     →  fugu-ultra
+```
+
+### Providers that require a base URL
+
+Some providers (currently Fugu/Sakana AI) don't have a fixed public endpoint — the base URL is issued per account. Pass it via `Credentials`:
+
+```python
+creds = Credentials(
+    api_key=os.environ["FUGU_API_KEY"],
+    base_url=os.environ["FUGU_BASE_URL"],  # e.g. https://...sakana.ai/...
+)
+envelope = asyncio.run(hopper.complete(
+    CanonicalRequest(model="fugu-ultra", messages=[...]),
+    creds,
+))
 ```
 
 ### Calling models not in the registry
@@ -144,8 +161,9 @@ The smoke test is the one exception: it's a developer tool for verifying real AP
 ```bash
 cp .env.example .env
 # fill in keys for the providers you want to test:
-#   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
-#   TOGETHER_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY
+#   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, TOGETHER_API_KEY,
+#   PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY,
+#   FUGU_API_KEY, FUGU_BASE_URL
 ```
 
 Providers without a key are skipped automatically.

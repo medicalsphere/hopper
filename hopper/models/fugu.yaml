@@ -1,0 +1,31 @@
+provider: fugu
+models:
+  - id: fugu
+    aliases: []
+    supported_params:
+      - max_tokens
+      - reasoning
+    unsupported_params:
+      - temperature
+    defaults:
+      max_tokens: 8192
+
+  - id: fugu-ultra
+    aliases: []
+    supported_params:
+      - max_tokens
+      - reasoning
+    unsupported_params:
+      - temperature
+    defaults:
+      max_tokens: 8192
+
+  - id: fugu-ultra-20260615
+    aliases: []
+    supported_params:
+      - max_tokens
+      - reasoning
+    unsupported_params:
+      - temperature
+    defaults:
+      max_tokens: 8192

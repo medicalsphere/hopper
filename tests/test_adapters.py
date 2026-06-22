@@ -1359,6 +1359,174 @@ class TestZaiAdapter:
 
 
 # ---------------------------------------------------------------------------
+# Fugu (Sakana AI) adapter — OpenAI Responses API via variable base URL
+# ---------------------------------------------------------------------------
+
+FUGU_CREDS = Credentials(api_key="test-key", base_url="https://api.example.com/fugu")
+
+
+class TestFuguAdapter:
+    """
+    Fugu uses the OpenAI Responses API (client.responses.create / .stream).
+    base_url is required — raises ValueError if absent.
+    System prompt goes in instructions=. max_tokens → max_output_tokens.
+    The adapter normalises the base URL: strips trailing slash, appends /v1.
+    """
+
+    def _mock_response(self, text: str = "Fugu reply") -> MagicMock:
+        resp = MagicMock()
+        resp.output_text = text
+        resp.status = "completed"
+        resp.incomplete_details = None
+        resp.usage = MagicMock(input_tokens=8, output_tokens=3, total_tokens=11)
+        resp.model_dump.return_value = {}
+        return resp
+
+    async def test_complete_returns_envelope(self):
+        from hopper.adapters.fugu import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        mock_client_cls.return_value.responses.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        with patch("hopper.adapters.fugu.AsyncOpenAI", mock_client_cls):
+            envelope = await ADAPTER.complete(
+                request=_req("fugu"),
+                model_entry=_entry("fugu", "fugu"),
+                credentials=FUGU_CREDS,
+                params={"max_tokens": 256},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        assert envelope.provider == "fugu"
+        assert envelope.model_id == "fugu"
+        assert envelope.response.content == "Fugu reply"
+        assert envelope.response.finish_reason == "stop"
+
+    async def test_requires_base_url(self):
+        from hopper.adapters.fugu import ADAPTER
+
+        with pytest.raises(ValueError, match="base URL"):
+            await ADAPTER.complete(
+                request=_req("fugu"),
+                model_entry=_entry("fugu", "fugu"),
+                credentials=CREDS,  # no base_url
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+    async def test_normalises_base_url_appends_v1(self):
+        """base_url without /v1 must have /v1 appended."""
+        from hopper.adapters.fugu import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        mock_client_cls.return_value.responses.create = AsyncMock(
+            return_value=self._mock_response()
+        )
+
+        creds_no_v1 = Credentials(api_key="k", base_url="https://api.example.com/fugu/")
+        with patch("hopper.adapters.fugu.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("fugu"),
+                model_entry=_entry("fugu", "fugu"),
+                credentials=creds_no_v1,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        init_kwargs = mock_client_cls.call_args.kwargs
+        assert init_kwargs["base_url"].endswith("/v1")
+        assert not init_kwargs["base_url"].endswith("//v1")
+
+    async def test_system_prompt_sent_as_instructions(self):
+        from hopper.adapters.fugu import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.responses.create = create_mock
+
+        with patch("hopper.adapters.fugu.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("fugu", system="You are helpful."),
+                model_entry=_entry("fugu", "fugu"),
+                credentials=FUGU_CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert call_kwargs.get("instructions") == "You are helpful."
+        for msg in call_kwargs.get("input", []):
+            assert msg.get("role") != "system"
+
+    async def test_max_tokens_translated_to_max_output_tokens(self):
+        from hopper.adapters.fugu import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.responses.create = create_mock
+
+        with patch("hopper.adapters.fugu.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("fugu"),
+                model_entry=_entry("fugu", "fugu"),
+                credentials=FUGU_CREDS,
+                params={"max_tokens": 512},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert call_kwargs.get("max_output_tokens") == 512
+        assert "max_tokens" not in call_kwargs
+
+    async def test_uses_input_not_messages(self):
+        from hopper.adapters.fugu import ADAPTER
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.close = AsyncMock()
+        create_mock = AsyncMock(return_value=self._mock_response())
+        mock_client_cls.return_value.responses.create = create_mock
+
+        with patch("hopper.adapters.fugu.AsyncOpenAI", mock_client_cls):
+            await ADAPTER.complete(
+                request=_req("fugu"),
+                model_entry=_entry("fugu", "fugu"),
+                credentials=FUGU_CREDS,
+                params={},
+                resolution_log=[],
+                include_raw=False,
+            )
+
+        call_kwargs = create_mock.call_args.kwargs
+        assert "input" in call_kwargs
+        assert "messages" not in call_kwargs
+
+    async def test_raises_import_error_when_sdk_missing(self):
+        from hopper.adapters.fugu import ADAPTER
+
+        with patch("hopper.adapters.fugu.AsyncOpenAI", None):
+            with pytest.raises(ImportError, match="openai"):
+                await ADAPTER.complete(
+                    request=_req("fugu"),
+                    model_entry=_entry("fugu", "fugu"),
+                    credentials=FUGU_CREDS,
+                    params={},
+                    resolution_log=[],
+                    include_raw=False,
+                )
+
+
+# ---------------------------------------------------------------------------
 # hopper.complete() — integration with retry logic
 # ---------------------------------------------------------------------------
 

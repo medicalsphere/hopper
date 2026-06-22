@@ -66,18 +66,34 @@ _IMAGE_EXPECTED  = "5"
 
 # ---------------------------------------------------------------------------
 # Provider table
-# (label, model_id, env_var, supports_vision)
+# (label, model_id, env_var, supports_vision, base_url_env_var or None)
 # ---------------------------------------------------------------------------
 PROVIDERS = [
-    ("anthropic",  "claude-sonnet-4-6",       "ANTHROPIC_API_KEY", True),
-    ("openai",     "gpt-5.4-2026-03-05", "OPENAI_API_KEY",    True),
-    ("google",     "gemini-3-flash-preview",   "GEMINI_API_KEY",    True),
-    ("together",   "zai-org/GLM-5",            "TOGETHER_API_KEY",  True),
-    ("perplexity", "perplexity/sonar",           "PERPLEXITY_API_KEY", True),
-    ("grok",       "grok-4.20",                "XAI_API_KEY",       True),
-    ("kimi",       "kimi-k2.6",                "KIMI_API_KEY",      True),
-    ("zai",        "glm-5.2",                  "ZAI_API_KEY",       True),
+    ("anthropic",  "claude-sonnet-4-6",       "ANTHROPIC_API_KEY",  True,  None),
+    ("openai",     "gpt-5.4-2026-03-05",      "OPENAI_API_KEY",     True,  None),
+    ("google",     "gemini-3-flash-preview",   "GEMINI_API_KEY",     True,  None),
+    ("together",   "zai-org/GLM-5",            "TOGETHER_API_KEY",   True,  None),
+    ("perplexity", "perplexity/sonar",          "PERPLEXITY_API_KEY", True,  None),
+    ("grok",       "grok-4.20",                "XAI_API_KEY",        True,  None),
+    ("kimi",       "kimi-k2.6",                "KIMI_API_KEY",       True,  None),
+    ("zai",        "glm-5.2",                  "ZAI_API_KEY",        True,  None),
+    ("fugu",       "fugu",                     "FUGU_API_KEY",       False, "FUGU_BASE_URL"),
 ]
+
+
+def _build_creds(env_var: str, base_url_var: str | None, tag: str) -> Credentials | None:
+    """Return Credentials if all required env vars are set, else print skip and return None."""
+    api_key = os.environ.get(env_var)
+    if not api_key:
+        _print_skip(tag, f"{env_var} not set")
+        return None
+    base_url = None
+    if base_url_var:
+        base_url = os.environ.get(base_url_var)
+        if not base_url:
+            _print_skip(tag, f"{base_url_var} not set")
+            return None
+    return Credentials(api_key=api_key, base_url=base_url)
 
 GREEN  = "\033[32m"
 RED    = "\033[31m"
@@ -253,14 +269,12 @@ async def main(use_stream: bool, skip_image: bool, skip_multi: bool) -> None:
 
     # --- basic ---
     _section("Basic completion")
-    for label, model, env_var, _ in PROVIDERS:
-        api_key = os.environ.get(env_var)
+    for label, model, env_var, _, base_url_var in PROVIDERS:
         tag = f"{label}/{model}"
-        if not api_key:
-            _print_skip(tag, f"{env_var} not set")
+        creds = _build_creds(env_var, base_url_var, tag)
+        if creds is None:
             skipped += 1
             continue
-        creds = Credentials(api_key=api_key)
         if use_stream:
             record(await _test_stream(tag, label, model, creds))
         else:
@@ -269,30 +283,30 @@ async def main(use_stream: bool, skip_image: bool, skip_multi: bool) -> None:
     # --- image ---
     if not skip_image:
         _section("Image input")
-        for label, model, env_var, supports_vision in PROVIDERS:
-            api_key = os.environ.get(env_var)
+        for label, model, env_var, supports_vision, base_url_var in PROVIDERS:
             tag = f"{label}/{model}"
-            if not api_key:
-                _print_skip(tag, f"{env_var} not set")
-                skipped += 1
-                continue
             if not supports_vision:
-                _print_skip(tag, "provider does not support image input")
+                creds_check = os.environ.get(env_var)
+                if creds_check:
+                    _print_skip(tag, "provider does not support image input")
+                    skipped += 1
+                continue
+            creds = _build_creds(env_var, base_url_var, tag)
+            if creds is None:
                 skipped += 1
                 continue
-            record(await _test_image(tag, model, Credentials(api_key=api_key)))
+            record(await _test_image(tag, model, creds))
 
     # --- multi-turn ---
     if not skip_multi:
         _section("Multi-turn conversation")
-        for label, model, env_var, _ in PROVIDERS:
-            api_key = os.environ.get(env_var)
+        for label, model, env_var, _, base_url_var in PROVIDERS:
             tag = f"{label}/{model}"
-            if not api_key:
-                _print_skip(tag, f"{env_var} not set")
+            creds = _build_creds(env_var, base_url_var, tag)
+            if creds is None:
                 skipped += 1
                 continue
-            record(await _test_multiturn(tag, model, Credentials(api_key=api_key)))
+            record(await _test_multiturn(tag, model, creds))
 
     print(f"\n{ok} passed, {failed} failed, {skipped} skipped")
     if failed:

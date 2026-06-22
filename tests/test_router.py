@@ -44,16 +44,16 @@ def test_raises_for_unknown_model():
         router.resolve(_req("not-a-real-model"))
 
 
-def test_all_eight_providers_have_at_least_one_model():
+def test_all_nine_providers_have_at_least_one_model():
     providers_found = {entry.provider for entry in router._MODELS.values()}
-    assert providers_found == {"anthropic", "openai", "google", "together", "perplexity", "grok", "kimi", "zai"}
+    assert providers_found == {"anthropic", "openai", "google", "together", "perplexity", "grok", "kimi", "zai", "fugu"}
 
 
 def test_registry_covers_expected_aliases():
     for alias in ["claude-sonnet", "claude-opus",
                   "gpt-5.4", "gpt-5.4-mini",
                   "gemini-3-flash", "gemini-3.1-pro", "GLM-5",
-                  "grok", "sonar", "kimi", "glm", "zai"]:
+                  "grok", "sonar", "kimi", "glm", "zai", "fugu", "fugu-ultra", "fugu-ultra-20260615"]:
         assert alias in router._MODELS, f"Alias {alias!r} missing from registry"
 
 
