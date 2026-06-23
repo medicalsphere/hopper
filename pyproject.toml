@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "medicalsphere-hopper"
-version = "0.5.2"
+version = "0.5.3"
 description = "Unified Python library for AI model API calls"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -22,6 +22,7 @@ grok = ["openai>=1.0.0"]
 kimi = ["openai>=1.0.0"]
 fugu = ["openai>=1.0.0"]
 zai = ["openai>=1.0.0"]
+openrouter = ["openai>=1.0.0"]
 all = [
     "anthropic>=0.40.0",
     "openai>=1.0.0",

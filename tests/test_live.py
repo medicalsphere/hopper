@@ -56,6 +56,7 @@ PROVIDERS = [
     ("kimi",       "kimi-k2.6",              "KIMI_API_KEY",       None),
     ("zai",        "glm-5.2",               "ZAI_API_KEY",        None),
     ("fugu",       "fugu-ultra",             "FUGU_API_KEY",       None),
+    ("openrouter", "openrouter/fusion",       "OPENROUTER_API_KEY", None),
 ]
 
 

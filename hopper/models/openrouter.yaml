@@ -1,0 +1,13 @@
+provider: openrouter
+models:
+  - id: openrouter/fusion
+    aliases:
+      - fusion
+    supported_params:
+      - temperature
+      - max_tokens
+      - top_p
+      - thinking
+    unsupported_params: []
+    defaults:
+      max_tokens: 4096

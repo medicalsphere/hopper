@@ -44,9 +44,9 @@ def test_raises_for_unknown_model():
         router.resolve(_req("not-a-real-model"))
 
 
-def test_all_nine_providers_have_at_least_one_model():
+def test_all_providers_have_at_least_one_model():
     providers_found = {entry.provider for entry in router._MODELS.values()}
-    assert providers_found == {"anthropic", "openai", "google", "together", "perplexity", "grok", "kimi", "zai", "fugu"}
+    assert providers_found == {"anthropic", "openai", "google", "together", "perplexity", "grok", "kimi", "zai", "fugu", "openrouter"}
 
 
 def test_registry_covers_expected_aliases():
