@@ -6,7 +6,7 @@ Named after Grace Hopper — the original abstraction layer between human intent
 
 ## Supported providers
 
-Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI), Z.AI (GLM), Fugu (Sakana AI).
+Anthropic, OpenAI, Google Gemini, Together AI, Perplexity, xAI Grok, Kimi (Moonshot AI), Z.AI (GLM), Fugu (Sakana AI), OpenRouter.
 
 ## Installation
 
@@ -18,7 +18,8 @@ Install only the provider SDKs you need:
 
 ```bash
 pip install "medicalsphere-hopper[anthropic]"       # Anthropic
-pip install "medicalsphere-hopper[openai]"          # OpenAI, Perplexity, Grok, Kimi, Z.AI
+pip install "medicalsphere-hopper[openai]"          # OpenAI, Perplexity, Grok, Kimi, Z.AI, Fugu
+pip install "medicalsphere-hopper[openrouter]"      # OpenRouter
 pip install "medicalsphere-hopper[google]"          # Google Gemini
 pip install "medicalsphere-hopper[together]"        # Together AI
 pip install "medicalsphere-hopper[anthropic,openai,google,together]"  # all
@@ -105,6 +106,7 @@ Every model has short aliases so you don't need to remember full IDs:
 "zai"            →  glm-5.2
 "fugu"           →  fugu       (model ID, no alias needed)
 "fugu-ultra"     →  fugu-ultra
+"fusion"         →  openrouter/fusion
 ```
 
 ### Calling models not in the registry
@@ -147,7 +149,8 @@ The smoke test is the one exception: it's a developer tool for verifying real AP
 cp .env.example .env
 # fill in keys for the providers you want to test:
 #   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, TOGETHER_API_KEY,
-#   PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY, FUGU_API_KEY
+#   PERPLEXITY_API_KEY, XAI_API_KEY, KIMI_API_KEY, ZAI_API_KEY, FUGU_API_KEY,
+#   OPENROUTER_API_KEY
 ```
 
 Providers without a key are skipped automatically.
